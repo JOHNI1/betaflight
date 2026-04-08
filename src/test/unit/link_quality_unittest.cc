@@ -593,6 +593,11 @@ extern "C" {
         return true;
     }
 
+    float rxMspOverrideReadRawRc(const rxRuntimeState_t *, const rxConfig_t *, uint8_t, float rxSample)
+    {
+        return rxSample;
+    }
+
     float pt1FilterGain(float f_cut, float dT)
     {
         UNUSED(f_cut);

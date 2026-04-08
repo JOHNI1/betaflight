@@ -179,6 +179,8 @@ void rxFrameCheck(timeUs_t currentTimeUs, timeDelta_t currentDeltaTimeUs);
 bool rxIsReceivingSignal(void);
 bool rxAreFlightChannelsValid(void);
 bool calculateRxChannelsAndUpdateFailsafe(timeUs_t currentTimeUs);
+float rxGetChannelBeforeOverride(uint8_t channel);
+bool rxMspOverrideActive(void);
 
 struct rxConfig_s;
 
