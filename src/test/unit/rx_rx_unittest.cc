@@ -242,6 +242,7 @@ extern "C" {
     void sumhInit(const rxConfig_t *, rxRuntimeState_t *) {}
     void xBusInit(const rxConfig_t *, rxRuntimeState_t *) {}
     void rxMspInit(const rxConfig_t *, rxRuntimeState_t *) {}
+    float rxMspOverrideReadRawRc(const rxRuntimeState_t *, const rxConfig_t *, uint8_t, float rxSample) { return rxSample; }
     void rxPwmInit(const rxConfig_t *, rxRuntimeState_t *) {}
     void setArmingDisabled(armingDisableFlags_e flag) { UNUSED(flag); }
     void unsetArmingDisabled(armingDisableFlags_e flag) { UNUSED(flag); }

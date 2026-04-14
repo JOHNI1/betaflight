@@ -199,6 +199,11 @@ bool rxMspInit(rxConfig_t *rxConfig, rxRuntimeState_t *rxRuntimeState, rcReadRaw
     return true;
 }
 
+float rxMspOverrideReadRawRc(const rxRuntimeState_t *, const rxConfig_t *, uint8_t, float rxSample)
+{
+    return rxSample;
+}
+
 bool featureIsEnabled(uint32_t)
 {
     return false;

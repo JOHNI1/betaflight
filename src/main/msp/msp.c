@@ -1320,6 +1320,20 @@ case MSP_NAME:
             sbufWriteU16(dst, rcData[i]);
         }
         break;
+        
+    case MSP_RC_BEFORE_OVERRIDE:
+#if defined(USE_RX_MSP_OVERRIDE)
+        if (!rxMspOverrideActive()) {
+            return MSP_RESULT_ERROR;
+        }
+
+        for (int i = 0; i < rxRuntimeState.channelCount; i++) {
+            sbufWriteU16(dst, rxGetChannelBeforeOverride(i));
+        }
+        break;
+#else
+        return MSP_RESULT_ERROR;
+#endif
 
     case MSP_ATTITUDE:
         sbufWriteU16(dst, attitude.values.roll);

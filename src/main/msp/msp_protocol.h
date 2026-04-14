@@ -340,6 +340,7 @@
 #define MSP_UID                  160    //out message         Unique device ID
 #define MSP_GPSSVINFO            164    //out message         get Signal Strength (only U-Blox)
 #define MSP_GPSSTATISTICS        166    //out message         get GPS debugging data
+#define MSP_RC_BEFORE_OVERRIDE   167    //out message         rc channels before MSP override is applied (Betaflight fork)
 #define MSP_MULTIPLE_MSP         230    //out message         request multiple MSPs in one request - limit is the TX buffer; returns each MSP in the order they were requested starting with length of MSP; MSPs with input arguments are not supported
 #define MSP_MODE_RANGES_EXTRA    238    //out message         Reads the extra mode range data
 #define MSP_ACC_TRIM             240    //out message         get acc angle trim values

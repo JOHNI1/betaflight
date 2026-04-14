@@ -125,6 +125,7 @@ static timeUs_t suspendRxSignalUntil = 0;
 static uint8_t  skipRxSamples = 0;
 
 static float rcRaw[MAX_SUPPORTED_RC_CHANNEL_COUNT];     // last received raw value, as it comes
+static float rcDataBeforeOverride[MAX_SUPPORTED_RC_CHANNEL_COUNT]; // last received value before MSP override is applied
 float rcData[MAX_SUPPORTED_RC_CHANNEL_COUNT];           // scaled, modified, checked and constrained values
 uint32_t validRxSignalTimeout[MAX_SUPPORTED_RC_CHANNEL_COUNT];
 
@@ -299,10 +300,12 @@ void rxInit(void)
 
     uint32_t now = millis();
     for (int i = 0; i < MAX_SUPPORTED_RC_CHANNEL_COUNT; i++) {
+        rcDataBeforeOverride[i] = rxConfig()->midrc;
         rcData[i] = rxConfig()->midrc;
         validRxSignalTimeout[i] = now + MAX_INVALID_PULSE_TIME_MS;
     }
 
+    rcDataBeforeOverride[THROTTLE] = (featureIsEnabled(FEATURE_3D)) ? rxConfig()->midrc : rxConfig()->rx_min_usec;
     rcData[THROTTLE] = (featureIsEnabled(FEATURE_3D)) ? rxConfig()->midrc : rxConfig()->rx_min_usec;
 
     // Initialize ARM switch to OFF position when arming via switch is defined
@@ -658,25 +661,25 @@ STATIC_UNIT_TESTED float applyRxChannelRangeConfiguraton(float sample, const rxC
 static void readRxChannelsApplyRanges(void)
 {
     for (int channel = 0; channel < rxChannelCount; channel++) {
-
         const uint8_t rawChannel = channel < RX_MAPPABLE_CHANNEL_COUNT ? rxConfig()->rcmap[channel] : channel;
 
-        // sample the channel
-        float sample;
+        // Sample the physical receiver first so MSP can expose the value before any override is applied.
+        float beforeOverrideSample = rxRuntimeState.rcReadRawFn(&rxRuntimeState, rawChannel);
+        float sample = beforeOverrideSample;
+
 #if defined(USE_RX_MSP_OVERRIDE)
         if (rxConfig()->msp_override_channels_mask) {
-            sample = rxMspOverrideReadRawRc(&rxRuntimeState, rxConfig(), rawChannel);
-        } else
-#endif
-        {
-            sample = rxRuntimeState.rcReadRawFn(&rxRuntimeState, rawChannel);
+            sample = rxMspOverrideReadRawRc(&rxRuntimeState, rxConfig(), rawChannel, beforeOverrideSample);
         }
+#endif
 
         // apply the rx calibration
         if (channel < NON_AUX_CHANNEL_COUNT) {
+            beforeOverrideSample = applyRxChannelRangeConfiguraton(beforeOverrideSample, rxChannelRangeConfigs(channel));
             sample = applyRxChannelRangeConfiguraton(sample, rxChannelRangeConfigs(channel));
         }
 
+        rcDataBeforeOverride[channel] = beforeOverrideSample;
         rcRaw[channel] = sample;
     }
 }
@@ -795,6 +798,24 @@ bool calculateRxChannelsAndUpdateFailsafe(timeUs_t currentTimeUs)
     rcSampleIndex++;
 
     return true;
+}
+
+float rxGetChannelBeforeOverride(uint8_t channel)
+{
+    if (channel >= rxRuntimeState.channelCount) {
+        return 0;
+    }
+
+    return rcDataBeforeOverride[channel];
+}
+
+bool rxMspOverrideActive(void)
+{
+#if defined(USE_RX_MSP_OVERRIDE)
+    return rxConfig()->msp_override_channels_mask && IS_RC_MODE_ACTIVE(BOXMSPOVERRIDE);
+#else
+    return false;
+#endif
 }
 
 void parseRcChannels(const char *input, rxConfig_t *rxConfig)
